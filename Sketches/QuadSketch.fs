@@ -1,6 +1,8 @@
 module OpenGLPlayground.Sketches.Sketches.QuadSketch
 
 open System
+open System.Diagnostics
+open System.Numerics
 open Silk.NET.OpenGL
 open FSharp.NativeInterop
 
@@ -30,9 +32,12 @@ let private fragSource =
     @"
     #version 330 core
     out vec4 FragColor;
+    
+    uniform vec4 u_Color;
+    
     void main()
     {
-        FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
+        FragColor = u_Color;
     }
     "
 
@@ -51,6 +56,8 @@ let private vertices =
        0.0f |]
 
 let private indices = [| 0; 1; 3; 1; 2; 3 |]
+
+let sw = Stopwatch.StartNew ()
 
 let quadSketch: Sketch<QuadState> =
     { OnInit =
@@ -117,13 +124,12 @@ let quadSketch: Sketch<QuadState> =
             
             gl.glDo <| fun () ->
                 gl.VertexAttribPointer(
-                    0u,
-                    3,
-                    VertexAttribPointerType.Float,
-                    false,
-                    3u * uint sizeof<float32>,
-                    NativePtr.nullPtr<unativeint>
-                    |> NativePtr.toVoidPtr
+                    0u, // location
+                    3, // num vertex components (must be 1,2,3,4)
+                    VertexAttribPointerType.Float, // type of each component
+                    false, // don't normalize (we are already using floats)
+                    3u * uint sizeof<float32>, // stride (size of each vertex in bytes)
+                    IntPtr.Zero.ToPointer() // 0, offset pointer to first vertex in the buffer
                 )
             gl.glDo <| fun () -> gl.EnableVertexAttribArray(0u)
                 
@@ -142,16 +148,25 @@ let quadSketch: Sketch<QuadState> =
         fun _ prev -> prev
       OnRender =
         fun gl state ->
-            let glDo = gl.glDo
+            gl.glDo <| fun () -> gl.BindVertexArray state.Vao
+            gl.glDo <| fun () -> gl.UseProgram state.Shader
             
-            glDo <| fun () -> gl.BindVertexArray state.Vao
-            glDo <| fun () -> gl.UseProgram state.Shader
+            // set uColor uniform
+            let uLocation = gl.glDo <| fun () -> gl.GetUniformLocation(state.Shader, "u_Color")
+            if uLocation = -1 then
+                printfn "Could not find uniform location for `u_Color`"
+                printfn "Possible causes include: 1. Misspelled uniform name, 2. uniform unused in shader, and was stripped during shader compilation."
+            let g =
+                sw.ElapsedMilliseconds |> float
+                |> fun v -> Math.Sin (v / 100.0) |> float32 // -1 to 1
+                |> fun v -> (v + 1f) / 2f  // 0 to 1
+                
+            gl.glDo <| fun () -> gl.Uniform4(uLocation, Vector4(1.0f, g, 0.0f, 0.0f))
 
-            glDo <| fun () ->
+            gl.glDo <| fun () ->
                 gl.DrawElements(
                     PrimitiveType.Triangles,
                     uint indices.Length,
                     DrawElementsType.UnsignedInt,
-                    NativePtr.nullPtr<unativeint>
-                    |> NativePtr.toVoidPtr
+                    IntPtr.Zero.ToPointer() // 0, offset pointer to first index
                 )}
