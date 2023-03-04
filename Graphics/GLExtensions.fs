@@ -1,4 +1,4 @@
-module OpenGLPlayground.Infrastructure.Graphics.GLExtensions
+module Graphics.GLExtensions
 
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices

@@ -1,9 +1,9 @@
-module OpenGLPlayground.Infrastructure.Graphics.BufferObject
+module Graphics.BufferObject
 
 open System
 open Microsoft.FSharp.NativeInterop
 open Silk.NET.OpenGL
-open OpenGLPlayground.Infrastructure.Graphics.GLExtensions
+open GLExtensions
 
 type BufferObject<'T when 'T : unmanaged >(gl: GL, data: 'T array, bufferType: BufferTargetARB) =
     // create a handle to the buffer

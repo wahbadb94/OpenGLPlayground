@@ -1,4 +1,4 @@
-module OpenGLPlayground.Infrastructure.Graphics.App
+module Graphics.App
 
 open System.Runtime.InteropServices
 open Microsoft.FSharp.Core
@@ -7,7 +7,9 @@ open Silk.NET.Maths
 open Silk.NET.OpenGL
 open Silk.NET.Windowing
 
-type WindowOptions = { title: string; size: Vector2D<int> }
+type WindowSize = { height: int; width: int }
+
+type WindowOptions = { title: string; size: WindowSize }
 
 /// interface that drives an App
 type Sketch<'a> =
@@ -37,7 +39,7 @@ type App<'a>(sketch: Sketch<'a>, windowOptions: WindowOptions) =
     let window =
         let mutable o = WindowOptions.Default
         o.Title <- windowOptions.title
-        o.Size <- windowOptions.size
+        o.Size <- Vector2D (windowOptions.size.width, int windowOptions.size.height)
         Window.Create(o)
 
     let onLoad () =
