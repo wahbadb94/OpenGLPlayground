@@ -1,7 +1,7 @@
-module OpenGLPlayground.CounterApp
+module OpenGLPlayground.Sketches.Sketches.CounterSketch
 
 open System.Diagnostics
-open OpenGLPlayground.App
+open OpenGLPlayground.Infrastructure.Graphics.App
 
 type FpsState =
     { FrameCount: int64

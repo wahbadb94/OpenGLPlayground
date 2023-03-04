@@ -1,4 +1,4 @@
-module OpenGLPlayground.App
+module OpenGLPlayground.Infrastructure.Graphics.App
 
 open System.Runtime.InteropServices
 open Microsoft.FSharp.Core

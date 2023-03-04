@@ -1,11 +1,12 @@
-module OpenGLPlayground.QuadSketch
+module OpenGLPlayground.Sketches.Sketches.QuadSketch
 
 open System
-open OpenGLPlayground.App
-open OpenGLPlayground.BufferObject
-open OpenGLPlayground.GLExtensions
 open Silk.NET.OpenGL
 open FSharp.NativeInterop
+
+open OpenGLPlayground.Infrastructure.Graphics.App
+open OpenGLPlayground.Infrastructure.Graphics.BufferObject
+open OpenGLPlayground.Infrastructure.Graphics.GLExtensions
 
 type QuadState =
     {

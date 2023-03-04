@@ -1,6 +1,6 @@
-﻿open OpenGLPlayground
-open Silk.NET.Maths
-open OpenGLPlayground.App
+﻿open Silk.NET.Maths
+open OpenGLPlayground.Infrastructure.Graphics.App
+open OpenGLPlayground.Sketches.Sketches
 
 App(
     QuadSketch.quadSketch,
