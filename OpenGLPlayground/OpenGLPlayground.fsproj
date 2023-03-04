@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net7.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="GLExtensions.fs" />
+        <Compile Include="BufferObject.fs" />
+        <Compile Include="App.fs" />
+        <Compile Include="CounterSketch.fs" />
+        <Compile Include="QuadSketch.fs" />
+        <Compile Include="Program.fs" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
+        <PackageReference Include="Silk.NET.Windowing" Version="2.16.0" />
+    </ItemGroup>
+
+</Project>

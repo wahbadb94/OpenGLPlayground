@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "OpenGLPlayground", "OpenGLPlayground\OpenGLPlayground.fsproj", "{D44E5F22-36F9-4765-8E9D-4549D46CD998}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D44E5F22-36F9-4765-8E9D-4549D46CD998}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D44E5F22-36F9-4765-8E9D-4549D46CD998}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D44E5F22-36F9-4765-8E9D-4549D46CD998}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D44E5F22-36F9-4765-8E9D-4549D46CD998}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
