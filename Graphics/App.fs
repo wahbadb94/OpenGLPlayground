@@ -32,7 +32,9 @@ type private SketchInstance<'a> (gl: GL, sketch: Sketch<'a>) =
         
     member this.onRender (_: float) = sketch.OnRender gl state
     
-    member this.onClose () = sketch.OnClose gl state
+    member this.onClose () =
+        sketch.OnClose gl state
+        printfn "Sketch closed gracefully."
 
 /// Top level entity to be instantiated in Program.fs
 type App<'a>(sketch: Sketch<'a>, windowOptions: WindowOptions) =
