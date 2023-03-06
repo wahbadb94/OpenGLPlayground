@@ -13,7 +13,7 @@ let counterApp: Sketch<FpsState> =
         fun _ ->
             { FrameCount = 0L
               Stopwatch = Stopwatch.StartNew()
-              Fps = 0 }
+              Fps = 0 } |> Ok
       OnClose = fun _ __ -> ()
       OnUpdate =
         fun _ prev ->

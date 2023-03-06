@@ -14,7 +14,7 @@ type WindowOptions = { title: string; size: WindowSize }
 /// interface that drives an App
 type Sketch<'a> =
     { /// returns the initial state of the app
-      OnInit: GL -> 'a
+      OnInit: GL -> Result<'a, string>
       /// returns new state from previous state
       OnUpdate: GL -> 'a -> 'a
       /// handles rendering, takes state as input
@@ -25,7 +25,15 @@ type Sketch<'a> =
 /// instance of some generic sketch (Sketch<'a>). It functions as both a container for the mutable sketch state and a
 /// wrapper around/adapter for Sketch lifecycle methods, allowing them to be hooked into the Silk window lifecycle methods
 type private SketchInstance<'a> (gl: GL, sketch: Sketch<'a>) =
-    let mutable state = sketch.OnInit(gl)
+    let mutable state =
+        match sketch.OnInit(gl) with
+        | Ok s -> s
+        | Error errorMsg ->
+            printfn $"Failed to Initialize SketchInstance:"
+            printfn $"{errorMsg}"
+            
+            exit 1
+            Unchecked.defaultof<'a> // doesn't actually get used
     
     member this.onUpdate (_: float) =
         state <- sketch.OnUpdate gl state

@@ -11,6 +11,8 @@ open GLExtensions
 /// 2. create program from vert and frag
 /// 3. clean up any unneeded GPU memory
 type ShaderProgram (gl: GL, vertPath: string, fragPath: string) =
+    let mutable errorMsg = None
+    
     let loadShaderFile ( shaderType: ShaderType ) path =
         let source = File.ReadAllText path
         let handle = gl.glDo <| fun () -> gl.CreateShader shaderType
@@ -32,6 +34,8 @@ type ShaderProgram (gl: GL, vertPath: string, fragPath: string) =
             
             printfn $"Error compiling {friendlyName} Shader:"
             printfn $"{infoLog}"
+            
+            errorMsg <- Some infoLog
 
         handle
     
@@ -68,6 +72,8 @@ type ShaderProgram (gl: GL, vertPath: string, fragPath: string) =
             2. Uniform unused in shader, and was stripped during shader compilation.
         "
     
+    member this.ErrorMsg = errorMsg
+    
     /// calls glUseProgram
     member this.useProgram () = gl.UseProgram program
     
@@ -78,6 +84,10 @@ type ShaderProgram (gl: GL, vertPath: string, fragPath: string) =
             printfn $"{uniformNotFoundReason}"
             
         location
+    
+    member this.setUniform1i name (value: int) =
+        let location = this.getUniformLocation name
+        gl.glDo <| fun () -> gl.Uniform1 (location, value)
     
     member this.setUniform4 (name: string) (data: Vector4) =
         let location = this.getUniformLocation name

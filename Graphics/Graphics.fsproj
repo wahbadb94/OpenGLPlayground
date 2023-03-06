@@ -10,6 +10,7 @@
         <Compile Include="GLExtensions.fs" />
         <Compile Include="GLSLAttributeAttribute.fs" />
         <Compile Include="BufferObject.fs" />
+        <Compile Include="Texture.fs" />
         <Compile Include="VertexArrayObject.fs" />
         <Compile Include="ShaderProgram.fs" />
         <Compile Include="App.fs" />
@@ -18,6 +19,8 @@
     <ItemGroup>
       <PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
       <PackageReference Include="Silk.NET.Windowing" Version="2.16.0" />
+      <PackageReference Include="SkiaSharp" Version="2.88.3" />
+      <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.3" />
     </ItemGroup>
 
 </Project>
