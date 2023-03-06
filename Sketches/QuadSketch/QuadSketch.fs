@@ -3,21 +3,22 @@ module Sketches.QuadSketch
 open System
 open System.Diagnostics
 open System.Numerics
-open Graphics.ShaderProgram
-open Graphics.VertexArrayObject
+
 open Silk.NET.OpenGL
 
+open Graphics.VertexArrayObject
+open Graphics.ShaderProgram
 open Graphics.App
 open Graphics.BufferObject
 open Graphics.GLExtensions
+open Graphics.GLSLAttributeAttribute
 
 [<Struct>]
-type Vertex =
-    { position: Vector3 
-      color: Vector3 }
+[<GLSLAttribute(0u, VertexAttributeType.Vec3)>]
+[<GLSLAttribute(1u, VertexAttributeType.Vec3)>]
+type Vertex = { position: Vector3; color: Vector3 }
     
-type QuadState =
-    {
+type QuadState = {
       Vbo: BufferObject<Vertex>
       Ebo: BufferObject<int>
       Vao: VertexArrayObject
@@ -39,17 +40,13 @@ let sw = Stopwatch.StartNew ()
 let quadSketch: Sketch<QuadState> =
     { OnInit =
         fun gl ->
-            // create vertex array object
-            let vao = VertexArrayObject gl
+            let vao = VertexArrayObject gl // create the vertex array object
 
-            // init vertex buffer, element array buffer, and shader program
-            let vbo = BufferObject (gl, vertices, BufferTargetARB.ArrayBuffer)
-            let ebo = BufferObject (gl, indices, BufferTargetARB.ElementArrayBuffer)
-            let shader = ShaderProgram (gl, "QuadSketch/vert.vert", "QuadSketch/frag.frag")
+            let vbo = BufferObject (gl, vertices, BufferTargetARB.ArrayBuffer) // buffer for vertex data
+            let ebo = BufferObject (gl, indices, BufferTargetARB.ElementArrayBuffer) // buffer for index data
+            let shader = ShaderProgram (gl, "QuadSketch/vert.vert", "QuadSketch/frag.frag") // create shader program
             
-            // tell opengl the layout of the vertices we just added
-            vao.addVertexAttribute<Vertex> VertexAttributeType.Vec3 VertexAttribPointerType.Float // attribute (position) vec3<float32>
-            vao.addVertexAttribute<Vertex> VertexAttributeType.Vec3 VertexAttribPointerType.Float // attribute (color) vec3<float32>
+            vao.enableVertexAttributes<Vertex> () // tell openGL how to interpret vertex data
                 
             { Ebo = ebo
               Vbo = vbo

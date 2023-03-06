@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <Compile Include="GLExtensions.fs" />
+        <Compile Include="GLSLAttributeAttribute.fs" />
         <Compile Include="BufferObject.fs" />
         <Compile Include="VertexArrayObject.fs" />
         <Compile Include="ShaderProgram.fs" />
