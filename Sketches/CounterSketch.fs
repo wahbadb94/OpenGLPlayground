@@ -10,11 +10,12 @@ type FpsState =
 
 let counterApp: Sketch<FpsState> =
     { OnInit =
-        fun _ ->
+        fun _ __ ->
             { FrameCount = 0L
               Stopwatch = Stopwatch.StartNew()
               Fps = 0 } |> Ok
       OnClose = fun _ __ -> ()
+      OnResize = fun _ prev  -> prev
       OnUpdate =
         fun _ prev ->
             if not prev.Stopwatch.IsRunning then

@@ -3,6 +3,7 @@ module Graphics.ShaderProgram
 open System
 open System.IO
 open System.Numerics
+open System.Runtime.InteropServices
 open Silk.NET.OpenGL
 open GLExtensions
 
@@ -85,12 +86,22 @@ type ShaderProgram (gl: GL, vertPath: string, fragPath: string) =
             
         location
     
-    member this.setUniform1i name (value: int) =
+    // scalar
+    member this.setUniform (name: string , value: int) =
         let location = this.getUniformLocation name
         gl.glDo <| fun () -> gl.Uniform1 (location, value)
     
-    member this.setUniform4 (name: string) (data: Vector4) =
+    // vec4
+    member this.setUniform (name: string, data: Numerics.Vector4) =
         let location = this.getUniformLocation name
         gl.glDo <| fun () -> gl.Uniform4 (location, data)
+    
+    // mat4
+    member this.setUniform (name: string, mat: Matrix4x4) =
+        let location = this.getUniformLocation(name)
+        gl.glDo <| fun () ->
+            let span = MemoryMarshal.CreateReadOnlySpan(ref mat, 1)
+            let asFloat = MemoryMarshal.Cast<Matrix4x4, float32>(span)
+            gl.UniformMatrix4(location, 1u, false, asFloat)
         
     member this.delete () = gl.glDo <| fun () -> gl.DeleteProgram program

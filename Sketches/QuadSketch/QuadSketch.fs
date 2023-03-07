@@ -26,7 +26,8 @@ type QuadState = {
       Vao: VertexArrayObject
       Shader: ShaderProgram
       Texture: Texture
-      uColorG: float32 }
+      uColor: float32
+      uMVP: Matrix4x4 }
 
 let private vertices =
     [|
@@ -49,24 +50,33 @@ let private delete state =
 
 let quadSketch: Sketch<QuadState> =
     { OnInit =
-        fun gl ->
+        fun gl size ->
             let vao = VertexArrayObject gl // create the vertex array object
 
             let vbo = BufferObject (gl, vertices, BufferTargetARB.ArrayBuffer) // buffer for vertex data
             let ebo = BufferObject (gl, indices, BufferTargetARB.ElementArrayBuffer) // buffer for index data
             let shader = ShaderProgram (gl, "QuadSketch/vert.vert", "QuadSketch/frag.frag") // create shader program
             let texture = Texture (gl, "QuadSketch/FSharpLogo.png")
+            let mvp = Matrix4x4.CreateOrthographic(2.0f, 2f * float32 size.Y / float32 size.X, -4f, 1f)
             
             vao.enableVertexAttributes<Vertex> () // tell openGL how to interpret vertex data
             
-            let state = { Vbo = vbo; Ebo = ebo; Vao = vao; Shader = shader; Texture = texture; uColorG = 0f }
+            let state =
+                { Vbo = vbo
+                  Ebo = ebo
+                  Vao = vao
+                  Shader = shader
+                  Texture = texture
+                  uColor = 0f
+                  uMVP = mvp }
             
             match shader.ErrorMsg with
             | Some e ->
                 delete state // clean up resources we've created
                 Error e
             | None -> Ok state
-                
+      OnResize = fun size prev ->
+          { prev with uMVP = Matrix4x4.CreateOrthographic(float32 size.X, float32 size.Y, 1f, -1f) }
       OnUpdate =
         fun _ prev ->
             // update green channel
@@ -75,17 +85,18 @@ let quadSketch: Sketch<QuadState> =
                 |> fun v -> 1.0 + Math.Sin (v / 100.0) / 2.0 // osc range [0.0, 1.0]
                 |> float32 
                 
-            { prev with uColorG = g }
+            { prev with uColor = g }
       OnRender =
         fun gl state ->
             gl.glDo <| fun () -> gl.Clear(ClearBufferMask.ColorBufferBit)
             
             state.Vao.bind () // not strictly necessary since we only have one vao
             state.Shader.useProgram ()
-            state.Shader.setUniform4 "u_Color" <| Vector4(1.0f, state.uColorG, 0.0f, 0.0f)
+            state.Shader.setUniform ("u_Color",  Vector4(1.0f, state.uColor, 0.0f, 0.0f))
+            state.Shader.setUniform ("u_MVP", state.uMVP)
             
             state.Texture.bind TextureUnit.Texture0
-            state.Shader.setUniform1i "u_Texture0" 0
+            state.Shader.setUniform ("u_Texture0", 0)
 
             // actual draw call
             gl.glDo <| fun () ->
