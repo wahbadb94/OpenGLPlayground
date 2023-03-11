@@ -91,11 +91,15 @@ type ShaderProgram (gl: GL, vertPath: string, fragPath: string) =
         let location = this.getUniformLocation name
         gl.glDo <| fun () -> gl.Uniform1 (location, value)
     
-    // vec4
-    member this.setUniform (name: string, data: Numerics.Vector4) =
+    // vectors
+    member this.setUniform (name: string, data: Vector4) =
         let location = this.getUniformLocation name
         gl.glDo <| fun () -> gl.Uniform4 (location, data)
     
+    member this.setUniform (name: string, data: Vector3) =
+        let location = this.getUniformLocation name
+        gl.glDo <| fun () -> gl.Uniform3 (location, data)
+        
     // mat4
     member this.setUniform (name: string, mat: Matrix4x4) =
         let location = this.getUniformLocation(name)
@@ -103,5 +107,5 @@ type ShaderProgram (gl: GL, vertPath: string, fragPath: string) =
             let span = MemoryMarshal.CreateReadOnlySpan(ref mat, 1)
             let asFloat = MemoryMarshal.Cast<Matrix4x4, float32>(span)
             gl.UniformMatrix4(location, 1u, false, asFloat)
-        
+    
     member this.delete () = gl.glDo <| fun () -> gl.DeleteProgram program

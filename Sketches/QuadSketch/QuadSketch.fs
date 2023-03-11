@@ -4,7 +4,9 @@ open System
 open System.Diagnostics
 open System.Numerics
 
+open Graphics.Lighting
 open Graphics.Transform
+open Silk.NET.Maths
 open Silk.NET.OpenGL
 
 open Graphics.VertexArrayObject
@@ -18,8 +20,7 @@ open Graphics.Texture
 [<Struct>]
 [<GLSLAttribute(0u, VertexAttributeType.Vec3)>]
 [<GLSLAttribute(1u, VertexAttributeType.Vec3)>]
-[<GLSLAttribute(2u, VertexAttributeType.Vec2)>]
-type Vertex = { position: Vector3; color: Vector3; texCoords: Vector2 }
+type Vertex = { position: Vector3; normal: Vector3; }
     
 type QuadState = {
       Vbo: BufferObject<Vertex>
@@ -29,19 +30,64 @@ type QuadState = {
       Texture: Texture
       uColor: float32
       ProjectionMatrix: Matrix4x4
-      RotationZ: float32
-      Scale: float32
-      Translation: Vector3 }
+      ViewMatrix: Matrix4x4
+      Transform: Transform
+      Lighting: Lighting }
+
+let private vertexRaw =
+    [|
+            -0.5f; -0.5f; -0.5f;  0.0f;  0.0f; -1.0f;
+             0.5f; -0.5f; -0.5f;  0.0f;  0.0f; -1.0f; 
+             0.5f;  0.5f; -0.5f;  0.0f;  0.0f; -1.0f; 
+             0.5f;  0.5f; -0.5f;  0.0f;  0.0f; -1.0f; 
+            -0.5f;  0.5f; -0.5f;  0.0f;  0.0f; -1.0f; 
+            -0.5f; -0.5f; -0.5f;  0.0f;  0.0f; -1.0f; 
+        
+            -0.5f; -0.5f;  0.5f;  0.0f;  0.0f; 1.0f;
+             0.5f; -0.5f;  0.5f;  0.0f;  0.0f; 1.0f;
+             0.5f;  0.5f;  0.5f;  0.0f;  0.0f; 1.0f;
+             0.5f;  0.5f;  0.5f;  0.0f;  0.0f; 1.0f;
+            -0.5f;  0.5f;  0.5f;  0.0f;  0.0f; 1.0f;
+            -0.5f; -0.5f;  0.5f;  0.0f;  0.0f; 1.0f;
+        
+            -0.5f;  0.5f;  0.5f; -1.0f;  0.0f;  0.0f;
+            -0.5f;  0.5f; -0.5f; -1.0f;  0.0f;  0.0f;
+            -0.5f; -0.5f; -0.5f; -1.0f;  0.0f;  0.0f;
+            -0.5f; -0.5f; -0.5f; -1.0f;  0.0f;  0.0f;
+            -0.5f; -0.5f;  0.5f; -1.0f;  0.0f;  0.0f;
+            -0.5f;  0.5f;  0.5f; -1.0f;  0.0f;  0.0f;
+        
+             0.5f;  0.5f;  0.5f;  1.0f;  0.0f;  0.0f;
+             0.5f;  0.5f; -0.5f;  1.0f;  0.0f;  0.0f;
+             0.5f; -0.5f; -0.5f;  1.0f;  0.0f;  0.0f;
+             0.5f; -0.5f; -0.5f;  1.0f;  0.0f;  0.0f;
+             0.5f; -0.5f;  0.5f;  1.0f;  0.0f;  0.0f;
+             0.5f;  0.5f;  0.5f;  1.0f;  0.0f;  0.0f;
+        
+            -0.5f; -0.5f; -0.5f;  0.0f; -1.0f;  0.0f;
+             0.5f; -0.5f; -0.5f;  0.0f; -1.0f;  0.0f;
+             0.5f; -0.5f;  0.5f;  0.0f; -1.0f;  0.0f;
+             0.5f; -0.5f;  0.5f;  0.0f; -1.0f;  0.0f;
+            -0.5f; -0.5f;  0.5f;  0.0f; -1.0f;  0.0f;
+            -0.5f; -0.5f; -0.5f;  0.0f; -1.0f;  0.0f;
+        
+            -0.5f;  0.5f; -0.5f;  0.0f;  1.0f;  0.0f;
+             0.5f;  0.5f; -0.5f;  0.0f;  1.0f;  0.0f;
+             0.5f;  0.5f;  0.5f;  0.0f;  1.0f;  0.0f;
+             0.5f;  0.5f;  0.5f;  0.0f;  1.0f;  0.0f;
+            -0.5f;  0.5f;  0.5f;  0.0f;  1.0f;  0.0f;
+            -0.5f;  0.5f; -0.5f;  0.0f;  1.0f;  0.0f
+    |]
 
 let private vertices =
-    [|
-        { position = Vector3(0.5f, 0.5f, 0.0f); color = Vector3(1.0f, 0.0f, 0.0f); texCoords = Vector2(1f, 1f)}
-        { position = Vector3(0.5f, -0.5f, 0.0f); color = Vector3(0.0f, 1.0f, 0.0f); texCoords = Vector2(1f, 0f)} 
-        { position = Vector3(-0.5f, -0.5f, 0.0f); color = Vector3(0.0f, 0.0f, 1.0f); texCoords = Vector2(0f, 0f) } 
-        { position = Vector3(-0.5f, 0.5f, 0.0f); color = Vector3(1.0f, 0.0f, 1.0f); texCoords = Vector2(0f, 1f) } 
-    |]
-    
-let private indices = [| 0; 1; 3; 1; 2; 3 |]
+    [ for v in 0..(vertexRaw.Length / 6)-1 do
+          let i = 6 * v
+          {
+              position = Vector3(vertexRaw[i], vertexRaw[i+1], vertexRaw[i+2])
+              normal = Vector3(vertexRaw[i+3], vertexRaw[i+4], vertexRaw[i+5])
+          }] |> List.toArray
+
+let private indices = [| 0; 1; 2; 1; 2; 3 |]
 
 let sw = Stopwatch.StartNew ()
 
@@ -61,7 +107,14 @@ let quadSketch: Sketch<QuadState> =
             let ebo = BufferObject (gl, indices, BufferTargetARB.ElementArrayBuffer) // buffer for index data
             let shader = ShaderProgram (gl, "QuadSketch/vert.vert", "QuadSketch/frag.frag") // create shader program
             let texture = Texture (gl, "QuadSketch/FSharpLogo.png")
-            let projectionMatrix = Matrix4x4.CreateOrthographic(2.0f, 2f * float32 size.Y / float32 size.X, -4f, 1f)
+            let projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(float32 Math.PI / 4f, float32 size.X / float32 size.Y, 0.1f, 100f)
+            let viewMatrix =
+                let cameraPos = Vector3(0f, 0f, 3f)
+                let cameraTarget = Vector3.Zero
+                let cameraDirection = Vector3.Normalize <| cameraTarget - cameraPos
+                let cameraRight = Vector3.Normalize <| Vector3.Cross(Vector3.UnitY, cameraDirection)
+                let cameraUp = Vector3.Normalize <| Vector3.Cross(cameraDirection, cameraRight)
+                Matrix4x4.CreateLookAt(cameraPos, cameraTarget, cameraUp)
             
             vao.enableVertexAttributes<Vertex> () // tell openGL how to interpret vertex data
             
@@ -73,9 +126,19 @@ let quadSketch: Sketch<QuadState> =
                   Texture = texture
                   uColor = 0f
                   ProjectionMatrix = projectionMatrix
-                  RotationZ = 0f
-                  Scale = 1f
-                  Translation = Vector3.Zero }
+                  ViewMatrix = viewMatrix
+                  Transform = {
+                      Scale = 1f
+                      Translation = Vector3.Zero
+                      Rotation = Vector3(0f, 0f, 0f)
+                  }
+                  Lighting = {
+                      ambient = Vector3(0.2f, 0.2f, 0.2f)
+                      diffuse = {
+                          position = Vector3(0f, 0f, 10f)
+                          color = Vector3(1f, 1f, 1f)
+                      }
+                  } }
             
             match shader.ErrorMsg with
             | Some e ->
@@ -84,45 +147,41 @@ let quadSketch: Sketch<QuadState> =
             | None -> Ok state
       OnResize = fun size prev ->
           { prev with
-                ProjectionMatrix = Matrix4x4.CreateOrthographic(float32 size.X, float32 size.Y, 1f, -1f) }
+                ProjectionMatrix = 
+                    Matrix4x4.CreatePerspectiveFieldOfView(
+                        float32 Math.PI / 4f,
+                        float32 size.X / float32 size.Y,
+                        0.1f, 100f) }
       OnUpdate =
         fun _ prev ->
-            // update green channel
-            let g =
-                sw.ElapsedMilliseconds |> float
-                |> fun v -> 1.0 + Math.Sin (v / 100.0) / 2.0 // osc range [0.0, 1.0]
-                |> float32
-                
             { prev with
-                uColor = g
-                RotationZ = prev.RotationZ + 0.005f
-                Scale = 1.1f * g }
+                Transform = {
+                    prev.Transform with
+                        Rotation = prev.Transform.Rotation + Vector3(0f, 0.003f, 0.009f)
+                }}
       OnRender =
         fun gl state ->
-            let viewMatrix: Transform =
-                {
-                    Scale = state.Scale
-                    Position = state.Translation
-                    Rotation = Matrix <| Matrix4x4.CreateFromAxisAngle(Vector3.UnitZ, state.RotationZ)
-                } 
-            gl.glDo <| fun () -> gl.Clear(ClearBufferMask.ColorBufferBit)
+            gl.glDo <| fun () -> gl.Clear(ClearBufferMask.ColorBufferBit ||| ClearBufferMask.DepthBufferBit)
+            gl.glDo <| fun () -> gl.Enable(EnableCap.DepthTest)
             
             state.Vao.bind () // not strictly necessary since we only have one vao
             state.Shader.useProgram ()
-            state.Shader.setUniform ("u_Color",  Vector4(1.0f, state.uColor, 0.0f, 0.0f))
-            state.Shader.setUniform ("u_MVP", viewMatrix.ViewMatrix * state.ProjectionMatrix)
+            state.Shader.setUniform ("u_model", state.Transform.AsModelMatrix)
+            state.Shader.setUniform ("u_view", state.ViewMatrix)
+            state.Shader.setUniform ("u_projection", state.ProjectionMatrix)
+            match state.Transform.NormalMatrix with
+            | Some m -> state.Shader.setUniform("u_normalMatrix", m)
+            | None -> printfn "[Playground Warning]: 'u_normalMatrix' was not set b/c does not exist."
+            
+            state.Shader.setUniform("u_lightAmbient", state.Lighting.ambient)
+            state.Shader.setUniform("u_lightDiffusePos", state.Lighting.diffuse.position)
+            state.Shader.setUniform("u_lightDiffuseColor", state.Lighting.diffuse.color)
             
             state.Texture.bind TextureUnit.Texture0
-            state.Shader.setUniform ("u_Texture0", 0)
 
             // actual draw call
             gl.glDo <| fun () ->
-                gl.DrawElements(
-                    PrimitiveType.Triangles,
-                    uint indices.Length,
-                    DrawElementsType.UnsignedInt,
-                    IntPtr.Zero.ToPointer() // 0, offset pointer to first index
-                )
+                gl.DrawArrays(PrimitiveType.Triangles, 0, uint32 vertices.Length)
                 
             state.Texture.unbind()
       OnClose = fun _ -> delete }

@@ -10,6 +10,7 @@
         <Compile Include="GLExtensions.fs" />
         <Compile Include="GLSLAttributeAttribute.fs" />
         <Compile Include="Transform.fs" />
+        <Compile Include="Lighting.fs" />
         <Compile Include="BufferObject.fs" />
         <Compile Include="Texture.fs" />
         <Compile Include="VertexArrayObject.fs" />

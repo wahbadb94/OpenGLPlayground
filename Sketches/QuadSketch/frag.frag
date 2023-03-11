@@ -1,20 +1,21 @@
 #version 330 core // using GLSL version 3.3
 
+in vec3 fragPos;
+in vec3 fragNormal;
 
-uniform vec4 u_Color;
-uniform sampler2D u_Texture0;
-
-in vec2 frag_uv;
 out vec4 FragColor;
+
+uniform vec3 u_lightAmbient;
+uniform vec3 u_lightDiffusePos;
+uniform vec3 u_lightDiffuseColor;
 
 void main()
 {
-    vec4 color = texture(u_Texture0, frag_uv);
+    vec3 objectColor = fragPos;
+    vec3 norm = normalize(fragNormal);
+    vec3 lightDir = normalize(u_lightDiffusePos - fragPos);
+    float diffuseStrength = max((dot(norm, lightDir)), 0.0);
+    vec3 lightDiffuse = diffuseStrength * u_lightDiffuseColor;
 
-    // set the blue stuff to be green
-    if (color.b > 0.5 && color.r < color.b && color.g < color.b) {
-        color = vec4(0., u_Color.g, 0., 1.);
-    }
-
-    FragColor = color;
+    FragColor = vec4((u_lightAmbient + lightDiffuse) * objectColor, 1.0);
 }
