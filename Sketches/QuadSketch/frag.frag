@@ -2,6 +2,7 @@
 
 in vec3 fragPos;
 in vec3 fragNormal;
+in vec3 objectColor;
 
 out vec4 FragColor;
 
@@ -11,7 +12,6 @@ uniform vec3 u_lightDiffuseColor;
 
 void main()
 {
-    vec3 objectColor = fragPos;
     vec3 norm = normalize(fragNormal);
     vec3 lightDir = normalize(u_lightDiffusePos - fragPos);
     float diffuseStrength = max((dot(norm, lightDir)), 0.0);

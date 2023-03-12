@@ -6,7 +6,6 @@ open System.Numerics
 
 open Graphics.Lighting
 open Graphics.Transform
-open Silk.NET.Maths
 open Silk.NET.OpenGL
 
 open Graphics.VertexArrayObject
@@ -21,9 +20,14 @@ open Graphics.Texture
 [<GLSLAttribute(0u, VertexAttributeType.Vec3)>]
 [<GLSLAttribute(1u, VertexAttributeType.Vec3)>]
 type Vertex = { position: Vector3; normal: Vector3; }
+
+[<Struct>]
+[<GLSLAttribute(2u, VertexAttributeType.Vec3)>]
+type InstanceOffset = { x: float32; y: float32; z: float32 }
     
 type QuadState = {
       Vbo: BufferObject<Vertex>
+      Ibo: BufferObject<InstanceOffset>
       Ebo: BufferObject<int>
       Vao: VertexArrayObject
       Shader: ShaderProgram
@@ -80,14 +84,27 @@ let private vertexRaw =
     |]
 
 let private vertices =
-    [ for v in 0..(vertexRaw.Length / 6)-1 do
-          let i = 6 * v
-          {
-              position = Vector3(vertexRaw[i], vertexRaw[i+1], vertexRaw[i+2])
-              normal = Vector3(vertexRaw[i+3], vertexRaw[i+4], vertexRaw[i+5])
-          }] |> List.toArray
+    [|
+        for v in 0..(vertexRaw.Length / 6)-1 do
+            let i = 6 * v
+            {
+                position = Vector3(vertexRaw[i], vertexRaw[i+1], vertexRaw[i+2])
+                normal = Vector3(vertexRaw[i+3], vertexRaw[i+4], vertexRaw[i+5])
+            }
+    |]
 
 let private indices = [| 0; 1; 2; 1; 2; 3 |]
+
+let private instance_dim = 50 // 10x10 instances
+let private num_instances = (instance_dim + 1) * (instance_dim + 1) * (2 * instance_dim + 1)
+
+let private instanceOffsets =
+    [|
+        for y in (-instance_dim/2)..(instance_dim/2) do
+            for x in (-instance_dim/2)..(instance_dim/2) do
+                for z in -(2 * instance_dim+1)..0 do
+                    { x = float32 x; y = float32 y; z = float32 z }
+    |]
 
 let sw = Stopwatch.StartNew ()
 
@@ -102,9 +119,9 @@ let quadSketch: Sketch<QuadState> =
     { OnInit =
         fun gl size ->
             let vao = VertexArrayObject gl // create the vertex array object
-
             let vbo = BufferObject (gl, vertices, BufferTargetARB.ArrayBuffer) // buffer for vertex data
             let ebo = BufferObject (gl, indices, BufferTargetARB.ElementArrayBuffer) // buffer for index data
+            let ibo = BufferObject (gl, instanceOffsets, BufferTargetARB.ArrayBuffer)
             let shader = ShaderProgram (gl, "QuadSketch/vert.vert", "QuadSketch/frag.frag") // create shader program
             let texture = Texture (gl, "QuadSketch/FSharpLogo.png")
             let projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(float32 Math.PI / 4f, float32 size.X / float32 size.Y, 0.1f, 100f)
@@ -116,10 +133,13 @@ let quadSketch: Sketch<QuadState> =
                 let cameraUp = Vector3.Normalize <| Vector3.Cross(cameraDirection, cameraRight)
                 Matrix4x4.CreateLookAt(cameraPos, cameraTarget, cameraUp)
             
-            vao.enableVertexAttributes<Vertex> () // tell openGL how to interpret vertex data
+            vao.enableVertexAttributes<Vertex> vbo // tell openGL how to interpret vertex data
+            vao.enableVertexAttributes<InstanceOffset> ibo // tell openGL how to interpret instance data
+            gl.glDo <| fun () -> gl.VertexAttribDivisor(2u, 1u)
             
             let state =
                 { Vbo = vbo
+                  Ibo = ibo
                   Ebo = ebo
                   Vao = vao
                   Shader = shader
@@ -128,14 +148,14 @@ let quadSketch: Sketch<QuadState> =
                   ProjectionMatrix = projectionMatrix
                   ViewMatrix = viewMatrix
                   Transform = {
-                      Scale = 1f
+                      Scale = 0.15f
                       Translation = Vector3.Zero
                       Rotation = Vector3(0f, 0f, 0f)
                   }
                   Lighting = {
                       ambient = Vector3(0.2f, 0.2f, 0.2f)
                       diffuse = {
-                          position = Vector3(0f, 0f, 10f)
+                          position = Vector3(0f, 0f, 2f)
                           color = Vector3(1f, 1f, 1f)
                       }
                   } }
@@ -181,7 +201,7 @@ let quadSketch: Sketch<QuadState> =
 
             // actual draw call
             gl.glDo <| fun () ->
-                gl.DrawArrays(PrimitiveType.Triangles, 0, uint32 vertices.Length)
+                gl.DrawArraysInstanced(PrimitiveType.Triangles, 0, uint32 vertices.Length, uint32 num_instances)
                 
             state.Texture.unbind()
       OnClose = fun _ -> delete }

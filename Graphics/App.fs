@@ -7,6 +7,8 @@ open Silk.NET.Maths
 open Silk.NET.OpenGL
 open Silk.NET.Windowing
 
+open GLExtensions
+
 type WindowSize = Vector2D<int>
 
 type WindowOptions = { title: string; size: Vector2D<int> }
@@ -53,6 +55,9 @@ type App<'a>(sketch: Sketch<'a>, windowOptions: WindowOptions) =
         let mutable o = WindowOptions.Default
         o.Title <- windowOptions.title
         o.Size <- windowOptions.size
+        o.Samples <- 4
+        o.VSync <- true
+        
         Window.Create(o)
 
     let onLoad () =
@@ -63,7 +68,9 @@ type App<'a>(sketch: Sketch<'a>, windowOptions: WindowOptions) =
         let onUpdate = sketchInstance.onUpdate
         let onRender = sketchInstance.onRender
         let onClose = sketchInstance.onClose
-        let onResize = sketchInstance.onResize
+        let onResize (s: WindowSize) =
+            gl.glDo <| fun () -> gl.Viewport s
+            sketchInstance.onResize s
         
         window.add_Update onUpdate
         window.add_Render onRender

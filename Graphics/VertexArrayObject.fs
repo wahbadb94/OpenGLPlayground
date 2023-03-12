@@ -1,6 +1,7 @@
 module Graphics.VertexArrayObject
 
 open System
+open Graphics.BufferObject
 open Graphics.GLSLAttributeAttribute
 open Microsoft.FSharp.Core
 open Silk.NET.OpenGL
@@ -27,7 +28,9 @@ type VertexArrayObject (gl: GL) =
         typeof<'a>.GetCustomAttributes(typeof<GLSLAttributeAttribute>, false)
         |> Array.map (fun obj -> obj :?> GLSLAttributeAttribute)
     
-    member this.enableVertexAttributes<'a when 'a: unmanaged> () =
+    member this.enableVertexAttributes<'a when 'a: unmanaged> (bufferObject: BufferObject<'a>) =
+        bufferObject.bind()
+        
         let sizeOfType = this.vertexAttribPointerTypeSize VertexAttribPointerType.Float
         let glslAttributes = this.getAttributes<'a>()
         
@@ -53,6 +56,7 @@ type VertexArrayObject (gl: GL) =
                 // increment the offset counter
                 offsetCount <- offsetCount + int a.DataType
             
+        bufferObject.unbind()
     
     member private this.vertexAttribPointerTypeSize (pointerType: VertexAttribPointerType) =
         match pointerType with
