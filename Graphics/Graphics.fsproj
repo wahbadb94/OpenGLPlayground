@@ -16,9 +16,12 @@
         <Compile Include="VertexArrayObject.fs" />
         <Compile Include="ShaderProgram.fs" />
         <Compile Include="App.fs" />
+        <Compile Include="Camera.fs" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="FSharpPlus" Version="1.4.0" />
+      <PackageReference Include="Silk.NET.Input" Version="2.16.0" />
       <PackageReference Include="Silk.NET.OpenGL" Version="2.16.0" />
       <PackageReference Include="Silk.NET.Windowing" Version="2.16.0" />
       <PackageReference Include="SkiaSharp" Version="2.88.3" />

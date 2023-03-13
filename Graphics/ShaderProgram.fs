@@ -91,6 +91,10 @@ type ShaderProgram (gl: GL, vertPath: string, fragPath: string) =
         let location = this.getUniformLocation name
         gl.glDo <| fun () -> gl.Uniform1 (location, value)
     
+    member this.setUniform (name: string , value: float32) =
+        let location = this.getUniformLocation name
+        gl.glDo <| fun () -> gl.Uniform1 (location, value)
+    
     // vectors
     member this.setUniform (name: string, data: Vector4) =
         let location = this.getUniformLocation name

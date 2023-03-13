@@ -16,8 +16,9 @@ let counterApp: Sketch<FpsState> =
               Fps = 0 } |> Ok
       OnClose = fun _ __ -> ()
       OnResize = fun _ prev  -> prev
+      onKeyDown = fun _kb _key _num -> ()
       OnUpdate =
-        fun _ prev ->
+        fun _gl _keyboard prev ->
             if not prev.Stopwatch.IsRunning then
                 prev.Stopwatch.Start()
 

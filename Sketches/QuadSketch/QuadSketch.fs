@@ -3,10 +3,8 @@ module Sketches.QuadSketch
 open System
 open System.Diagnostics
 open System.Numerics
-
-open Graphics.Lighting
-open Graphics.Transform
 open Silk.NET.OpenGL
+open Silk.NET.Input
 
 open Graphics.VertexArrayObject
 open Graphics.ShaderProgram
@@ -15,6 +13,9 @@ open Graphics.BufferObject
 open Graphics.GLExtensions
 open Graphics.GLSLAttributeAttribute
 open Graphics.Texture
+open Graphics.Camera
+open Graphics.Lighting
+open Graphics.Transform
 
 [<Struct>]
 [<GLSLAttribute(0u, VertexAttributeType.Vec3)>]
@@ -34,7 +35,7 @@ type QuadState = {
       Texture: Texture
       uColor: float32
       ProjectionMatrix: Matrix4x4
-      ViewMatrix: Matrix4x4
+      Camera: Camera
       Transform: Transform
       Lighting: Lighting }
 
@@ -114,7 +115,7 @@ let private delete state =
     state.Vao.delete ()
     state.Shader.delete ()
     state.Texture.delete ()
-
+    
 let quadSketch: Sketch<QuadState> =
     { OnInit =
         fun gl size ->
@@ -125,13 +126,7 @@ let quadSketch: Sketch<QuadState> =
             let shader = ShaderProgram (gl, "QuadSketch/vert.vert", "QuadSketch/frag.frag") // create shader program
             let texture = Texture (gl, "QuadSketch/FSharpLogo.png")
             let projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(float32 Math.PI / 4f, float32 size.X / float32 size.Y, 0.1f, 100f)
-            let viewMatrix =
-                let cameraPos = Vector3(0f, 0f, 3f)
-                let cameraTarget = Vector3.Zero
-                let cameraDirection = Vector3.Normalize <| cameraTarget - cameraPos
-                let cameraRight = Vector3.Normalize <| Vector3.Cross(Vector3.UnitY, cameraDirection)
-                let cameraUp = Vector3.Normalize <| Vector3.Cross(cameraDirection, cameraRight)
-                Matrix4x4.CreateLookAt(cameraPos, cameraTarget, cameraUp)
+            let camera = Camera ()
             
             vao.enableVertexAttributes<Vertex> vbo // tell openGL how to interpret vertex data
             vao.enableVertexAttributes<InstanceOffset> ibo // tell openGL how to interpret instance data
@@ -146,7 +141,7 @@ let quadSketch: Sketch<QuadState> =
                   Texture = texture
                   uColor = 0f
                   ProjectionMatrix = projectionMatrix
-                  ViewMatrix = viewMatrix
+                  Camera = camera
                   Transform = {
                       Scale = 0.15f
                       Translation = Vector3.Zero
@@ -165,6 +160,7 @@ let quadSketch: Sketch<QuadState> =
                 delete state // clean up resources we've created
                 Error e
             | None -> Ok state
+      onKeyDown = fun _keyboard _key _num -> ()
       OnResize = fun size prev ->
           { prev with
                 ProjectionMatrix = 
@@ -173,7 +169,15 @@ let quadSketch: Sketch<QuadState> =
                         float32 size.X / float32 size.Y,
                         0.1f, 100f) }
       OnUpdate =
-        fun _ prev ->
+        fun _gl _keyboard prev ->
+            if _keyboard.IsKeyPressed Key.I then
+                prev.Camera.moveForward ()
+            if _keyboard.IsKeyPressed Key.K then
+                prev.Camera.moveBackward ()
+            if _keyboard.IsKeyPressed Key.J then
+                prev.Camera.moveLeft ()
+            if _keyboard.IsKeyPressed Key.L then
+                prev.Camera.moveRight ()
             { prev with
                 Transform = {
                     prev.Transform with
@@ -187,7 +191,7 @@ let quadSketch: Sketch<QuadState> =
             state.Vao.bind () // not strictly necessary since we only have one vao
             state.Shader.useProgram ()
             state.Shader.setUniform ("u_model", state.Transform.AsModelMatrix)
-            state.Shader.setUniform ("u_view", state.ViewMatrix)
+            state.Shader.setUniform ("u_view", state.Camera.viewMatrix)
             state.Shader.setUniform ("u_projection", state.ProjectionMatrix)
             match state.Transform.NormalMatrix with
             | Some m -> state.Shader.setUniform("u_normalMatrix", m)
@@ -196,6 +200,9 @@ let quadSketch: Sketch<QuadState> =
             state.Shader.setUniform("u_lightAmbient", state.Lighting.ambient)
             state.Shader.setUniform("u_lightDiffusePos", state.Lighting.diffuse.position)
             state.Shader.setUniform("u_lightDiffuseColor", state.Lighting.diffuse.color)
+            state.Shader.setUniform("u_cameraPos", state.Camera.position)
+            state.Shader.setUniform("u_fogNear", 0f);
+            state.Shader.setUniform("u_fogFar", float32 (2 * instance_dim + 1));
             
             state.Texture.bind TextureUnit.Texture0
 
