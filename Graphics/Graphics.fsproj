@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Compile Include="ResultBuilder.fs" />
         <Compile Include="GLExtensions.fs" />
         <Compile Include="GLSLAttributeAttribute.fs" />
         <Compile Include="Transform.fs" />
@@ -14,6 +15,7 @@
         <Compile Include="BufferObject.fs" />
         <Compile Include="Texture.fs" />
         <Compile Include="VertexArrayObject.fs" />
+        <Compile Include="ShaderHelpers.fs" />
         <Compile Include="ShaderProgram.fs" />
         <Compile Include="App.fs" />
         <Compile Include="Camera.fs" />

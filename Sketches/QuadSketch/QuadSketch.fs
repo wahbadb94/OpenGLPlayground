@@ -3,6 +3,8 @@ module Sketches.QuadSketch
 open System
 open System.Diagnostics
 open System.Numerics
+open FSharpPlus.Data
+open Graphics.ResultBuilder
 open Silk.NET.OpenGL
 open Silk.NET.Input
 
@@ -83,7 +85,7 @@ let private vertexRaw =
             -0.5f;  0.5f;  0.5f;  0.0f;  1.0f;  0.0f;
             -0.5f;  0.5f; -0.5f;  0.0f;  1.0f;  0.0f
     |]
-
+    
 let private vertices =
     [|
         for v in 0..(vertexRaw.Length / 6)-1 do
@@ -95,7 +97,6 @@ let private vertices =
     |]
 
 let private indices = [| 0; 1; 2; 1; 2; 3 |]
-
 let private instance_dim = 50 // 10x10 instances
 let private num_instances = (instance_dim + 1) * (instance_dim + 1) * (2 * instance_dim + 1)
 
@@ -107,14 +108,10 @@ let private instanceOffsets =
                     { x = float32 x; y = float32 y; z = float32 z }
     |]
 
-let sw = Stopwatch.StartNew ()
+let private sw = Stopwatch.StartNew ()
 
-let private delete state =
-    state.Vbo.delete ()
-    state.Ebo.delete ()
-    state.Vao.delete ()
-    state.Shader.delete ()
-    state.Texture.delete ()
+let private vertPath = "/home/dink/Projects/FSharp/OpenGLPlayground/Sketches/QuadSketch/vert.vert"
+let private fragPath = "/home/dink/Projects/FSharp/OpenGLPlayground/Sketches/QuadSketch/frag.frag"
     
 let quadSketch: Sketch<QuadState> =
     { OnInit =
@@ -123,7 +120,11 @@ let quadSketch: Sketch<QuadState> =
             let vbo = BufferObject (gl, vertices, BufferTargetARB.ArrayBuffer) // buffer for vertex data
             let ebo = BufferObject (gl, indices, BufferTargetARB.ElementArrayBuffer) // buffer for index data
             let ibo = BufferObject (gl, instanceOffsets, BufferTargetARB.ArrayBuffer)
-            let shader = ShaderProgram (gl, "QuadSketch/vert.vert", "QuadSketch/frag.frag") // create shader program
+            let shader = ResultBuilder () {
+                 let! handle = Graphics.ShaderHelpers.ShaderHelpers.buildProgram gl vertPath fragPath 
+                 return ShaderProgram(gl, handle, vertPath, fragPath)
+            }
+                
             let texture = Texture (gl, "QuadSketch/FSharpLogo.png")
             let projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(float32 Math.PI / 4f, float32 size.X / float32 size.Y, 0.1f, 100f)
             let camera = Camera ()
@@ -132,34 +133,30 @@ let quadSketch: Sketch<QuadState> =
             vao.enableVertexAttributes<InstanceOffset> ibo // tell openGL how to interpret instance data
             gl.glDo <| fun () -> gl.VertexAttribDivisor(2u, 1u)
             
-            let state =
-                { Vbo = vbo
-                  Ibo = ibo
-                  Ebo = ebo
-                  Vao = vao
-                  Shader = shader
-                  Texture = texture
-                  uColor = 0f
-                  ProjectionMatrix = projectionMatrix
-                  Camera = camera
-                  Transform = {
-                      Scale = 0.15f
-                      Translation = Vector3.Zero
-                      Rotation = Vector3(0f, 0f, 0f)
-                  }
-                  Lighting = {
-                      ambient = Vector3(0.2f, 0.2f, 0.2f)
-                      diffuse = {
-                          position = Vector3(0f, 0f, 2f)
-                          color = Vector3(1f, 1f, 1f)
-                      }
-                  } }
+            shader |> Result.map (fun shader -> {
+                   Vbo = vbo
+                   Ibo = ibo
+                   Ebo = ebo
+                   Vao = vao
+                   Shader = shader
+                   Texture = texture
+                   uColor = 0f
+                   ProjectionMatrix = projectionMatrix
+                   Camera = camera
+                   Transform = {
+                       Scale = 0.15f
+                       Translation = Vector3.Zero
+                       Rotation = Vector3(0f, 0f, 0f)
+                   }
+                   Lighting = {
+                       ambient = Vector3(0.2f, 0.2f, 0.2f)
+                       diffuse = {
+                           position = Vector3(0f, 0f, 2f)
+                           color = Vector3(1f, 1f, 1f)
+                       }
+                   }                
+            })
             
-            match shader.ErrorMsg with
-            | Some e ->
-                delete state // clean up resources we've created
-                Error e
-            | None -> Ok state
       onKeyDown = fun _keyboard _key _num -> ()
       OnResize = fun size prev ->
           { prev with
@@ -211,4 +208,9 @@ let quadSketch: Sketch<QuadState> =
                 gl.DrawArraysInstanced(PrimitiveType.Triangles, 0, uint32 vertices.Length, uint32 num_instances)
                 
             state.Texture.unbind()
-      OnClose = fun _ -> delete }
+      OnClose = fun _ state ->
+        state.Vbo.delete ()
+        state.Ebo.delete ()
+        state.Vao.delete ()
+        state.Shader.delete ()
+        state.Texture.delete () }
