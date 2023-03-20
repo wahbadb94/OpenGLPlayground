@@ -3,7 +3,7 @@ module Sketches.CheckerPlane
 open System
 open System.Diagnostics
 open System.Numerics
-open Graphics.CEBuilders
+open Graphics.ShaderHelpers
 open Silk.NET.OpenGL
 open Silk.NET.Input
 
@@ -55,36 +55,34 @@ let checkeredSketch: Sketch<CheckeredState> =
             let vbo = BufferObject (gl, vertices, BufferTargetARB.ArrayBuffer) // buffer for vertex data
             let ebo = BufferObject (gl, indices, BufferTargetARB.ElementArrayBuffer) // buffer for index data
             
-            let shader = ResultBuilder () {
-                 let! handle = Graphics.ShaderHelpers.ShaderHelpers.buildProgram gl vertPath fragPath 
-                 return ShaderProgram(gl, handle, vertPath, fragPath)
-            }
-            let projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(float32 Math.PI / 4f, float32 size.X / float32 size.Y, 0.1f, 100f)
-            let camera = Camera ()
-            
-            vao.enableVertexAttributes<Vertex> vbo // tell openGL how to interpret vertex data
-            
-            // set up watchers for shader hot reload
-            
-            shader |> Result.map (fun shader ->
-                { Vbo = vbo
-                  Ebo = ebo
-                  Vao = vao
-                  Shader = shader
-                  ProjectionMatrix = projectionMatrix
-                  Camera = camera
-                  Transform = {
-                      Scale = 10f
-                      Translation = Vector3.Zero
-                      Rotation = Vector3(float32 Math.PI / -4f, 0f, 0f)
-                  }
-                  Lighting = {
-                      ambient = Vector3(0.2f, 0.2f, 0.2f)
-                      diffuse = {
-                          position = Vector3(0f, 0f, 2f)
-                          color = Vector3(1f, 1f, 1f)
-                      }
-                  }} )
+            ShaderHelpers.buildProgram gl vertPath fragPath
+            |> Result.map(fun shaderInit -> ShaderProgram (gl, shaderInit, vertPath, fragPath))
+            |> fun shaderResult ->
+                match shaderResult with
+                | Ok shader ->
+                    let projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(float32 Math.PI / 4f, float32 size.X / float32 size.Y, 0.1f, 100f)
+                    let camera = Camera ()
+                    
+                    vao.enableVertexAttributes<Vertex> vbo // tell openGL how to interpret vertex data
+                    
+                    Ok {
+                        Vbo = vbo
+                        Ebo = ebo
+                        Vao = vao
+                        Shader = shader
+                        ProjectionMatrix = projectionMatrix
+                        Camera = camera
+                        Transform = { Scale = 10f; Translation = Vector3.Zero; Rotation = Vector3(float32 Math.PI / -4f, 0f, 0f) }
+                        Lighting = {
+                            ambient = Vector3 (0.2f, 0.2f, 0.2f)
+                            diffuse = {position = Vector3(0f, 0f, 0f); color = Vector3(1f, 1f, 1f)}
+                        } }
+                | Error msg ->
+                    // clean up GPU resources
+                    vao.delete ()
+                    vbo.delete ()
+                    ebo.delete ()
+                    Error msg
       onKeyDown = fun _keyboard _key _num -> ()
       OnResize = fun size prev ->
           { prev with

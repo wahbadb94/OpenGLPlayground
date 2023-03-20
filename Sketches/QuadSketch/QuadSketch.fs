@@ -4,7 +4,7 @@ open System
 open System.Diagnostics
 open System.Numerics
 open FSharpPlus.Data
-open Graphics.CEBuilders
+open Graphics.ShaderHelpers
 open Silk.NET.OpenGL
 open Silk.NET.Input
 
@@ -120,43 +120,47 @@ let quadSketch: Sketch<QuadState> =
             let vbo = BufferObject (gl, vertices, BufferTargetARB.ArrayBuffer) // buffer for vertex data
             let ebo = BufferObject (gl, indices, BufferTargetARB.ElementArrayBuffer) // buffer for index data
             let ibo = BufferObject (gl, instanceOffsets, BufferTargetARB.ArrayBuffer)
-            let shader = ResultBuilder () {
-                 let! handle = Graphics.ShaderHelpers.ShaderHelpers.buildProgram gl vertPath fragPath 
-                 return ShaderProgram(gl, handle, vertPath, fragPath)
-            }
-                
-            let texture = Texture (gl, "QuadSketch/FSharpLogo.png")
-            let projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(float32 Math.PI / 4f, float32 size.X / float32 size.Y, 0.1f, 100f)
-            let camera = Camera ()
             
-            vao.enableVertexAttributes<Vertex> vbo // tell openGL how to interpret vertex data
-            vao.enableVertexAttributes<InstanceOffset> ibo // tell openGL how to interpret instance data
-            gl.glDo <| fun () -> gl.VertexAttribDivisor(2u, 1u)
-            
-            shader |> Result.map (fun shader -> {
-                   Vbo = vbo
-                   Ibo = ibo
-                   Ebo = ebo
-                   Vao = vao
-                   Shader = shader
-                   Texture = texture
-                   uColor = 0f
-                   ProjectionMatrix = projectionMatrix
-                   Camera = camera
-                   Transform = {
-                       Scale = 0.15f
-                       Translation = Vector3.Zero
-                       Rotation = Vector3(0f, 0f, 0f)
-                   }
-                   Lighting = {
-                       ambient = Vector3(0.2f, 0.2f, 0.2f)
-                       diffuse = {
-                           position = Vector3(0f, 0f, 2f)
-                           color = Vector3(1f, 1f, 1f)
+            ShaderHelpers.buildProgram gl vertPath fragPath
+            |> Result.map (fun shaderInit -> ShaderProgram (gl, shaderInit, vertPath, fragPath))
+            |> fun shaderResult ->
+                match shaderResult with
+                | Ok shader ->
+                    let texture = Texture (gl, "QuadSketch/FSharpLogo.png")
+                    let projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(float32 Math.PI / 4f, float32 size.X / float32 size.Y, 0.1f, 100f)
+                    let camera = Camera ()
+                    
+                    vao.enableVertexAttributes<Vertex> vbo // tell openGL how to interpret vertex data
+                    vao.enableVertexAttributes<InstanceOffset> ibo // tell openGL how to interpret instance data
+                    gl.glDo <| fun () -> gl.VertexAttribDivisor(2u, 1u)
+                    
+                    Ok {
+                       Vbo = vbo
+                       Ibo = ibo
+                       Ebo = ebo
+                       Vao = vao
+                       Shader = shader
+                       Texture = texture
+                       uColor = 0f
+                       ProjectionMatrix = projectionMatrix
+                       Camera = camera
+                       Transform = {
+                           Scale = 0.15f
+                           Translation = Vector3.Zero
+                           Rotation = Vector3(0f, 0f, 0f)
                        }
-                   }                
-            })
-            
+                       Lighting = {
+                           ambient = Vector3(0.2f, 0.2f, 0.2f)
+                           diffuse = { position = Vector3(0f, 0f, 2f); color = Vector3(1f, 1f, 1f)}
+                       }}
+                | Error msg ->
+                    // clean up
+                    vao.delete ()
+                    vbo.delete ()
+                    ebo.delete ()
+                    ibo.delete ()
+                    
+                    Error msg
       onKeyDown = fun _keyboard _key _num -> ()
       OnResize = fun size prev ->
           { prev with
