@@ -8,16 +8,15 @@
 
     <ItemGroup>
         <Compile Include="CounterSketch.fs" />
-        <Content Include="QuadSketch\vert.vert">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
-        <Content Include="QuadSketch\frag.frag">
-          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </Content>
+        <Content Include="QuadSketch\quad.vert" />
+        <Content Include="QuadSketch\quad.frag" />
         <Content Include="QuadSketch\FSharpLogo.png">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
         <Compile Include="QuadSketch\QuadSketch.fs" />
+        <Compile Include="CheckerPlaneSketch\CheckerPlaneSketch.fs" />
+        <Content Include="CheckerPlaneSketch\checkered.vert" />
+        <Content Include="CheckerPlaneSketch\checkered.frag" />
     </ItemGroup>
 
     <ItemGroup>

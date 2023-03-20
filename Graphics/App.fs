@@ -60,8 +60,9 @@ type App<'a>(sketch: Sketch<'a>, windowOptions: WindowOptions) =
         o.Size <- windowOptions.size
         o.Samples <- 4
         o.VSync <- true
+        o.API <- GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Core, ContextFlags.Default, APIVersion(4, 6))
         
-        Window.Create(o)
+        Window.Create o
 
     let onLoad () =
         let gl = GL.GetApi(window)

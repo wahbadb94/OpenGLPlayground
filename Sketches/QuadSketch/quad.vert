@@ -1,4 +1,4 @@
-#version 330 core //Using GLSL version 3.3
+#version 460 core // Using GLSL version 4.6
 
 layout (location = 0) in vec3 vPos;
 layout (location = 1) in vec3 vNormal;
@@ -8,10 +8,10 @@ out vec3 fragPos;
 out vec3 fragNormal;
 out vec3 objectColor;
 
-uniform mat4 u_model;
-uniform mat4 u_view;
-uniform mat4 u_projection;
-uniform mat4 u_normalMatrix;
+layout (location = 0) uniform mat4 u_model;
+layout (location = 1) uniform mat4 u_view;
+layout (location = 2) uniform mat4 u_projection;
+layout (location = 3) uniform mat4 u_normalMatrix;
 
 void main()
 {

@@ -4,7 +4,7 @@ open System
 open System.Diagnostics
 open System.Numerics
 open FSharpPlus.Data
-open Graphics.ResultBuilder
+open Graphics.CEBuilders
 open Silk.NET.OpenGL
 open Silk.NET.Input
 
@@ -110,8 +110,8 @@ let private instanceOffsets =
 
 let private sw = Stopwatch.StartNew ()
 
-let private vertPath = "/home/dink/Projects/FSharp/OpenGLPlayground/Sketches/QuadSketch/vert.vert"
-let private fragPath = "/home/dink/Projects/FSharp/OpenGLPlayground/Sketches/QuadSketch/frag.frag"
+let private vertPath = "/home/dink/Projects/FSharp/OpenGLPlayground/Sketches/QuadSketch/quad.vert"
+let private fragPath = "/home/dink/Projects/FSharp/OpenGLPlayground/Sketches/QuadSketch/quad.frag"
     
 let quadSketch: Sketch<QuadState> =
     { OnInit =
@@ -166,7 +166,7 @@ let quadSketch: Sketch<QuadState> =
                         float32 size.X / float32 size.Y,
                         0.1f, 100f) }
       OnUpdate =
-        fun _gl _keyboard prev ->
+        fun gl _keyboard prev ->
             if _keyboard.IsKeyPressed Key.I then
                 prev.Camera.moveForward ()
             if _keyboard.IsKeyPressed Key.K then
@@ -175,6 +175,9 @@ let quadSketch: Sketch<QuadState> =
                 prev.Camera.moveLeft ()
             if _keyboard.IsKeyPressed Key.L then
                 prev.Camera.moveRight ()
+            
+            prev.Shader.update gl 
+            
             { prev with
                 Transform = {
                     prev.Transform with

@@ -7,7 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="ResultBuilder.fs" />
+        <Compile Include="CEBuilders.fs" />
         <Compile Include="GLExtensions.fs" />
         <Compile Include="GLSLAttributeAttribute.fs" />
         <Compile Include="Transform.fs" />

@@ -1,4 +1,4 @@
-#version 330 core // using GLSL version 3.3
+#version 460 core // using GLSL version 4.6 
 
 in vec3 fragPos;
 in vec3 fragNormal;
@@ -6,12 +6,12 @@ in vec3 objectColor;
 
 out vec4 FragColor;
 
-uniform vec3 u_lightAmbient;
-uniform vec3 u_lightDiffusePos;
-uniform vec3 u_lightDiffuseColor;
-uniform vec3 u_cameraPos;
-uniform float u_fogNear;
-uniform float u_fogFar;
+layout (location = 4) uniform vec3 u_lightAmbient;
+layout (location = 5) uniform vec3 u_lightDiffusePos;
+layout (location = 6) uniform vec3 u_lightDiffuseColor;
+layout (location = 7) uniform vec3 u_cameraPos;
+layout (location = 9) uniform float u_fogNear;
+layout (location = 10) uniform float u_fogFar;
 
 vec3 fogColor = vec3(0.0, 0.0, 0.0);
 float getFogFactor();
